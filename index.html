@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pre-Launch QA &amp; Accessibility Checklist</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; color: #1e293b; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+    h1 { font-size: 1.4rem; margin: 0; }
+    .group { margin-bottom: 1.5rem; }
+    .group h2 { font-size: 1.05rem; color: #0369a1; margin-bottom: 0.5rem; }
+    label { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.45rem 0; cursor: pointer; }
+    input:checked + span { text-decoration: line-through; color: #64748b; }
+    button { padding: 0.4rem 0.85rem; border: 1px solid #94a3b8; background: #fff; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Pre-Launch QA &amp; Accessibility Checklist</h1>
+      <small id="progress-text">0 of 0 completed</small>
+    </div>
+    <button type="button" id="reset-btn">Reset</button>
+  </header>
+  <main id="checklist"></main>
+  <script>
+    const ITEMS = {
+      'Accessibility (WCAG)': [
+        'Skip-to-content link works via keyboard Tab',
+        'All interactive controls have visible :focus-visible outlines',
+        'Images have meaningful alt text (or alt="" for decorative)',
+        'Form inputs have explicit <label> and error descriptions',
+        'Color contrast meets at least 4.5:1 for body text'
+      ],
+      'Cross-Browser & Responsive': [
+        'No horizontal overflow at 320px, 768px, and 1280px',
+        'Tested in Chrome, Firefox, and Safari / mobile viewport',
+        'Modals and dropdowns close on Escape and outside click'
+      ],
+      'Performance & SEO': [
+        'Hero image and fonts load without layout shift (CLS)',
+        'Non-critical scripts are deferred',
+        'Meta title, description, and canonical tags are set'
+      ]
+    };
+    const STORAGE_KEY = 'qa-checklist-state-v1';
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const container = document.getElementById('checklist');
+    const progressEl = document.getElementById('progress-text');
+    function updateProgress() {
+      const boxes = container.querySelectorAll('input[type="checkbox"]');
+      const checked = container.querySelectorAll('input[type="checkbox"]:checked').length;
+      progressEl.textContent = `${checked} of ${boxes.length} completed`;
+    }
+    Object.entries(ITEMS).forEach(([group, tasks]) => {
+      const section = document.createElement('section');
+      section.className = 'group';
+      section.innerHTML = `<h2>${group}</h2>`;
+      tasks.forEach((task, idx) => {
+        const id = `${group}-${idx}`;
+        const label = document.createElement('label');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = Boolean(saved[id]);
+        cb.addEventListener('change', () => {
+          saved[id] = cb.checked;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+          updateProgress();
+        });
+        const span = document.createElement('span');
+        span.textContent = task;
+        label.append(cb, span);
+        section.appendChild(label);
+      });
+      container.appendChild(section);
+    });
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEY);
+      container.querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = false; });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>
